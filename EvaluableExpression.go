@@ -255,11 +255,34 @@ func (this EvaluableExpression) Tokens() []ExpressionToken {
 }
 
 /*
-	Returns the original expression used to create this EvaluableExpression.
+	Returns a string representation of this expression.
 */
 func (this EvaluableExpression) String() string {
+	if this.inputExpression != "" {
+		return this.inputExpression
+	}
 
-	return this.inputExpression
+	var expressionText string
+	for _, val := range this.Tokens() {
+		switch val.Kind {
+		case CLAUSE:
+			expressionText += fmt.Sprintf("%+v", "(")
+		case CLAUSE_CLOSE:
+			expressionText += fmt.Sprintf("%+v", ")")
+		case VARIABLE:
+			expressionText += fmt.Sprintf("[%+v]", val.Value)
+		case STRING, TIME:
+			expressionText += fmt.Sprintf("'%+v'", val.Value)
+		case COMPARATOR, LOGICALOP, MODIFIER, TERNARY:
+			expressionText += fmt.Sprintf(" %+v ", val.Value)
+		case SEPARATOR:
+			expressionText += fmt.Sprintf("%+v ", val.Value)
+		default:
+			expressionText += fmt.Sprintf("%+v", val.Value)
+		}
+	}
+
+	return expressionText
 }
 
 /*
