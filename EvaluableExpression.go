@@ -265,20 +265,16 @@ func (this EvaluableExpression) String() string {
 	var expressionText string
 	for _, val := range this.Tokens() {
 		switch val.Kind {
-		case CLAUSE:
-			expressionText += fmt.Sprintf("%+v", "(")
-		case CLAUSE_CLOSE:
-			expressionText += fmt.Sprintf("%+v", ")")
 		case VARIABLE:
-			expressionText += fmt.Sprintf("[%+v]", val.Value)
+			expressionText += fmt.Sprintf("[%+v]", val.Meta)
 		case STRING, TIME:
-			expressionText += fmt.Sprintf("'%+v'", val.Value)
+			expressionText += fmt.Sprintf("'%+v'", val.Meta)
 		case COMPARATOR, LOGICALOP, MODIFIER, TERNARY:
-			expressionText += fmt.Sprintf(" %+v ", val.Value)
+			expressionText += fmt.Sprintf(" %+v ", val.Meta)
 		case SEPARATOR:
-			expressionText += fmt.Sprintf("%+v ", val.Value)
+			expressionText += fmt.Sprintf("%+v ", val.Meta)
 		default:
-			expressionText += fmt.Sprintf("%+v", val.Value)
+			expressionText += fmt.Sprintf("%+v", val.Meta)
 		}
 	}
 

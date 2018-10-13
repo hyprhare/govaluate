@@ -46,14 +46,19 @@ var EVALUATION_FAILURE_PARAMETERS = map[string]interface{}{
 }
 
 func TestFullCycle(test *testing.T) {
-	currentExpressionString := "2 > 1 &&" +
-		"'something' != 'nothing' || (1,2,3) != (3,2,1) ||" +
-		"'2014-01-20' < 'Wed Jul  8 23:07:35 MDT 2015' && " +
-		"[escapedVariable name with spaces] <= unescaped\\-variableName &&" +
-		"modifierTest + 1000 / 2 > (80 * 100 % 2) && true ? true : false"
+	currentExpressionString := "2 > 1 && " +
+		"'something' != 'nothing' || (1,2,3) != (3,2,1) || " +
+		"func1(1337,'leet',sawce) < 'Wed Jul 8 23:07:35 MDT 2015' && " +
+		"[escapedVariable name with spaces] <= unescaped\\-variableName && " +
+		"modifierTest + 0xa3a2b3 / 2 > (80 * 100 % 2) && true ? true : false"
+	extraFuncs := map[string]ExpressionFunction{
+		"func1": func(args ...interface{}) (interface{}, error) {
+			return "2014-01-20", nil
+		},
+	}
 
 	var initialExpression, cycledExpression, finalExpression *EvaluableExpression
-	initialExpression, err := NewEvaluableExpression(currentExpressionString)
+	initialExpression, err := NewEvaluableExpressionWithFunctions(currentExpressionString, extraFuncs)
 	if err != nil {
 		test.Errorf("Failed to build expression from string... ERROR: %+v", err)
 	}
@@ -61,7 +66,7 @@ func TestFullCycle(test *testing.T) {
 	if err != nil {
 		test.Errorf("Failed to build expression from tokens, from string... ERROR: %+v", err)
 	}
-	temp2, err := NewEvaluableExpression(cycledExpression.String())
+	temp2, err := NewEvaluableExpressionWithFunctions(cycledExpression.String(), extraFuncs)
 	if err != nil {
 		test.Errorf("Failed to build expression from string, from tokens, from string... ERROR: %+v", err)
 	}
