@@ -258,10 +258,14 @@ func (this EvaluableExpression) Tokens() []ExpressionToken {
 	Returns a string representation of this expression.
 */
 func (this EvaluableExpression) String() string {
-	if this.inputExpression != "" {
-		return this.inputExpression
+	if this.inputExpression == "" {
+		this.inputExpression = this.composeExpressionText()
 	}
 
+	return this.inputExpression
+}
+
+func (this EvaluableExpression) composeExpressionText() string {
 	var expressionText string
 	for _, val := range this.Tokens() {
 		switch val.Kind {
@@ -292,4 +296,46 @@ func (this EvaluableExpression) Vars() []string {
 		}
 	}
 	return varlist
+}
+
+/*
+	Attempts to substitute all occurences of `variableName` with the contents of `subExp`
+*/
+func (this *EvaluableExpression) SubstituteVar(variableName string, subExp *EvaluableExpression) error {
+	currentExpTokens := this.Tokens()
+	subPoints := make([]int, 0)
+	for i, token := range currentExpTokens {
+		if token.Value == variableName {
+			subPoints = append(subPoints, i)
+		}
+	}
+	interTokens := make([]ExpressionToken, 0)
+	l := -1
+	for _, i := range subPoints {
+		interTokens = append(interTokens, currentExpTokens[l+1:i]...)
+		interTokens = append(interTokens, ExpressionToken{Kind: CLAUSE, Value: 40, Meta: "("})
+		interTokens = append(interTokens, subExp.Tokens()...)
+		interTokens = append(interTokens, ExpressionToken{Kind: CLAUSE_CLOSE, Value: 41, Meta: ")"})
+		l = i
+	}
+	interTokens = append(interTokens, currentExpTokens[l+1:]...)
+
+	tryMake, err := NewEvaluableExpressionFromTokens(interTokens)
+	if err != nil {
+		return err
+	}
+	*this = *tryMake
+	return nil
+}
+
+/*
+	Attempts to substitute all occurences of `variableName` with the contents of `subStr` making sure to include any extra `fnx`
+*/
+func (this *EvaluableExpression) SubstituteVarWithFunctions(variableName, subStr string, fnx map[string]ExpressionFunction) error {
+	newSub, err := NewEvaluableExpressionWithFunctions(subStr, fnx)
+	if err != nil {
+		return err
+	}
+
+	return this.SubstituteVar(variableName, newSub)
 }

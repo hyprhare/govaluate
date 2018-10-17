@@ -86,6 +86,46 @@ func TestFullCycle(test *testing.T) {
 	}
 }
 
+func TestSubstitute(test *testing.T) {
+	_initialExpressionString := "a + b == c"
+	subExpressionString := "a + b"
+	_subfinalExpressionString := "[a] + [b] == ([a] + [b])"
+	subsubExpressionString := "random()"
+	_finalExpressionString := "(random()) + [b] == ((random()) + [b])"
+	xtraFnx := map[string]ExpressionFunction{
+		"random": func(args ...interface{}) (interface{}, error) {
+			return 4, nil
+		},
+	}
+	var initialExpression, subExpression *EvaluableExpression
+	initialExpression, err := NewEvaluableExpression(_initialExpressionString)
+	if err != nil {
+		test.Errorf("Failed setup SubstituteVar() initial expression... ERROR: %+v", err)
+	}
+	subExpression, err = NewEvaluableExpression(subExpressionString)
+	if err != nil {
+		test.Errorf("Failed setup SubstituteVar() sub-expression ... ERROR: %+v", err)
+	}
+
+	err = initialExpression.SubstituteVar("c", subExpression)
+	if err != nil {
+		test.Errorf("Failed SubstituteVar() call... ERROR: %+v", err)
+	}
+	firstSubResult := initialExpression.String()
+	if firstSubResult != _subfinalExpressionString {
+		test.Errorf("1st Expected:\n`%s`\n	==\n`%s`", firstSubResult, _subfinalExpressionString)
+	}
+
+	err = initialExpression.SubstituteVarWithFunctions("a", subsubExpressionString, xtraFnx)
+	if err != nil {
+		test.Errorf("Failed SubstituteVarWithFunctions() call... ERROR: %+v", err)
+	}
+	secondSubResult := initialExpression.String()
+	if secondSubResult != _finalExpressionString {
+		test.Errorf("2nd Expected:\n`%s`\n	==\n`%s`", secondSubResult, _finalExpressionString)
+	}
+}
+
 func TestComplexParameter(test *testing.T) {
 
 	var expression *EvaluableExpression
